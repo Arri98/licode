@@ -1012,4 +1012,21 @@ void MediaStream::enableSlideShowBelowSpatialLayer(bool enabled, int spatial_lay
   });
 }
 
+void MediaStream::addMultipleHandlers(int m, char handlers[]){
+
+  for(int i = 0; i<m ;i++){
+     switch (handlers[i])
+      {
+      case 'A':
+        pipeline_->addFront(std::make_shared<RtcpProcessorHandler>());
+        break;
+      case 'B':
+        pipeline_->addFront(std::make_shared<FecReceiverHandler>());
+        break;
+      default:
+        break;
+      }
+  }
+}
+
 }  // namespace erizo

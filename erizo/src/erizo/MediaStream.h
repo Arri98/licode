@@ -9,7 +9,6 @@
 #include <string>
 #include <map>
 #include <random>
-#include <vector>
 
 #include "./logger.h"
 #include "./SdpInfo.h"
@@ -227,6 +226,8 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
   std::shared_ptr<QualityManager> quality_manager_;
   std::shared_ptr<PacketBufferService> packet_buffer_;
   std::shared_ptr<HandlerManager> handler_manager_;
+
+  void addMultipleHandlers(int m, char handlers[]);
 
   Pipeline::Ptr pipeline_;
 
