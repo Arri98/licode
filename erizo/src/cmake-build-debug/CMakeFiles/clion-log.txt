@@ -1,0 +1,48 @@
+/snap/clion/129/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/lic/licode/erizo/src
+-- Found PkgConfig: /usr/bin/pkg-config (found version "0.29.1") 
+-- The C compiler identification is GNU 9.3.0
+-- The CXX compiler identification is GNU 9.3.0
+-- Check for working C compiler: /usr/bin/cc
+-- Check for working C compiler: /usr/bin/cc - works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Check for working CXX compiler: /usr/bin/c++
+-- Check for working CXX compiler: /usr/bin/c++ - works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Could NOT find Doxygen (missing: DOXYGEN_EXECUTABLE) 
+CMake Error at CMakeLists.txt:69 (include):
+  include could not find load file:
+
+    /home/lic/licode/erizo/src/../conan_paths.cmake
+
+
+CMake Warning at CMakeLists.txt:71 (find_package):
+  By not providing "Findboost.cmake" in CMAKE_MODULE_PATH this project has
+  asked CMake to find a package configuration file provided by "boost", but
+  CMake did not find one.
+
+  Could not find a package configuration file provided by "boost" with any of
+  the following names:
+
+    boostConfig.cmake
+    boost-config.cmake
+
+  Add the installation prefix of "boost" to CMAKE_PREFIX_PATH or set
+  "boost_DIR" to a directory containing one of the above files.  If "boost"
+  provides a separate development package or SDK, be sure it has been
+  installed.
+
+
+CMake Error at CMakeLists.txt:7 (message):
+  lib not found: SRTP-NOTFOUND check README
+Call Stack (most recent call first):
+  CMakeLists.txt:78 (test_lib)
+
+
+-- Configuring incomplete, errors occurred!
+See also "/home/lic/licode/erizo/src/cmake-build-debug/CMakeFiles/CMakeOutput.log".

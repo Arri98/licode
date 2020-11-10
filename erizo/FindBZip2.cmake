@@ -12,9 +12,9 @@ mark_as_advanced(BZip2_FOUND BZip2_VERSION)
 
 
 
-set(BZip2_INCLUDE_DIRS "/home/a/.conan/data/bzip2/1.0.8/_/_/package/b27e2b40bcb70be2e7d6f0e0c6e43e35c530f8d3/include")
-set(BZip2_INCLUDE_DIR "/home/a/.conan/data/bzip2/1.0.8/_/_/package/b27e2b40bcb70be2e7d6f0e0c6e43e35c530f8d3/include")
-set(BZip2_INCLUDES "/home/a/.conan/data/bzip2/1.0.8/_/_/package/b27e2b40bcb70be2e7d6f0e0c6e43e35c530f8d3/include")
+set(BZip2_INCLUDE_DIRS "/home/lic/.conan/data/bzip2/1.0.8/_/_/package/b27e2b40bcb70be2e7d6f0e0c6e43e35c530f8d3/include")
+set(BZip2_INCLUDE_DIR "/home/lic/.conan/data/bzip2/1.0.8/_/_/package/b27e2b40bcb70be2e7d6f0e0c6e43e35c530f8d3/include")
+set(BZip2_INCLUDES "/home/lic/.conan/data/bzip2/1.0.8/_/_/package/b27e2b40bcb70be2e7d6f0e0c6e43e35c530f8d3/include")
 set(BZip2_RES_DIRS )
 set(BZip2_DEFINITIONS )
 set(BZip2_LINKER_FLAGS_LIST "" "")
@@ -55,7 +55,7 @@ mark_as_advanced(BZip2_INCLUDE_DIRS
 
 # Find the real .lib/.a and add them to BZip2_LIBS and BZip2_LIBRARY_LIST
 set(BZip2_LIBRARY_LIST bz2)
-set(BZip2_LIB_DIRS "/home/a/.conan/data/bzip2/1.0.8/_/_/package/b27e2b40bcb70be2e7d6f0e0c6e43e35c530f8d3/lib")
+set(BZip2_LIB_DIRS "/home/lic/.conan/data/bzip2/1.0.8/_/_/package/b27e2b40bcb70be2e7d6f0e0c6e43e35c530f8d3/lib")
 foreach(_LIBRARY_NAME ${BZip2_LIBRARY_LIST})
     unset(CONAN_FOUND_LIBRARY CACHE)
     find_library(CONAN_FOUND_LIBRARY NAME ${_LIBRARY_NAME} PATHS ${BZip2_LIB_DIRS}
@@ -93,8 +93,8 @@ foreach(_SYSTEM_LIB ${BZip2_SYSTEM_LIB})
     list(APPEND BZip2_LIBRARIES ${_SYSTEM_LIB})
 endforeach()
 
-set(CMAKE_MODULE_PATH "/home/a/.conan/data/bzip2/1.0.8/_/_/package/b27e2b40bcb70be2e7d6f0e0c6e43e35c530f8d3/" ${CMAKE_MODULE_PATH})
-set(CMAKE_PREFIX_PATH "/home/a/.conan/data/bzip2/1.0.8/_/_/package/b27e2b40bcb70be2e7d6f0e0c6e43e35c530f8d3/" ${CMAKE_PREFIX_PATH})
+set(CMAKE_MODULE_PATH "/home/lic/.conan/data/bzip2/1.0.8/_/_/package/b27e2b40bcb70be2e7d6f0e0c6e43e35c530f8d3/" ${CMAKE_MODULE_PATH})
+set(CMAKE_PREFIX_PATH "/home/lic/.conan/data/bzip2/1.0.8/_/_/package/b27e2b40bcb70be2e7d6f0e0c6e43e35c530f8d3/" ${CMAKE_PREFIX_PATH})
 
 foreach(_BUILD_MODULE_PATH ${BZip2_BUILD_MODULES_PATHS})
     include(${_BUILD_MODULE_PATH})

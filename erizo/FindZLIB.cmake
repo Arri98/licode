@@ -12,9 +12,9 @@ mark_as_advanced(ZLIB_FOUND ZLIB_VERSION)
 
 
 
-set(ZLIB_INCLUDE_DIRS "/home/a/.conan/data/zlib/1.2.11/_/_/package/d50a0d523d98c15bb147b18fa7d203887c38be8b/include")
-set(ZLIB_INCLUDE_DIR "/home/a/.conan/data/zlib/1.2.11/_/_/package/d50a0d523d98c15bb147b18fa7d203887c38be8b/include")
-set(ZLIB_INCLUDES "/home/a/.conan/data/zlib/1.2.11/_/_/package/d50a0d523d98c15bb147b18fa7d203887c38be8b/include")
+set(ZLIB_INCLUDE_DIRS "/home/lic/.conan/data/zlib/1.2.11/_/_/package/d50a0d523d98c15bb147b18fa7d203887c38be8b/include")
+set(ZLIB_INCLUDE_DIR "/home/lic/.conan/data/zlib/1.2.11/_/_/package/d50a0d523d98c15bb147b18fa7d203887c38be8b/include")
+set(ZLIB_INCLUDES "/home/lic/.conan/data/zlib/1.2.11/_/_/package/d50a0d523d98c15bb147b18fa7d203887c38be8b/include")
 set(ZLIB_RES_DIRS )
 set(ZLIB_DEFINITIONS )
 set(ZLIB_LINKER_FLAGS_LIST "" "")
@@ -55,7 +55,7 @@ mark_as_advanced(ZLIB_INCLUDE_DIRS
 
 # Find the real .lib/.a and add them to ZLIB_LIBS and ZLIB_LIBRARY_LIST
 set(ZLIB_LIBRARY_LIST z)
-set(ZLIB_LIB_DIRS "/home/a/.conan/data/zlib/1.2.11/_/_/package/d50a0d523d98c15bb147b18fa7d203887c38be8b/lib")
+set(ZLIB_LIB_DIRS "/home/lic/.conan/data/zlib/1.2.11/_/_/package/d50a0d523d98c15bb147b18fa7d203887c38be8b/lib")
 foreach(_LIBRARY_NAME ${ZLIB_LIBRARY_LIST})
     unset(CONAN_FOUND_LIBRARY CACHE)
     find_library(CONAN_FOUND_LIBRARY NAME ${_LIBRARY_NAME} PATHS ${ZLIB_LIB_DIRS}
@@ -93,8 +93,8 @@ foreach(_SYSTEM_LIB ${ZLIB_SYSTEM_LIB})
     list(APPEND ZLIB_LIBRARIES ${_SYSTEM_LIB})
 endforeach()
 
-set(CMAKE_MODULE_PATH "/home/a/.conan/data/zlib/1.2.11/_/_/package/d50a0d523d98c15bb147b18fa7d203887c38be8b/" ${CMAKE_MODULE_PATH})
-set(CMAKE_PREFIX_PATH "/home/a/.conan/data/zlib/1.2.11/_/_/package/d50a0d523d98c15bb147b18fa7d203887c38be8b/" ${CMAKE_PREFIX_PATH})
+set(CMAKE_MODULE_PATH "/home/lic/.conan/data/zlib/1.2.11/_/_/package/d50a0d523d98c15bb147b18fa7d203887c38be8b/" ${CMAKE_MODULE_PATH})
+set(CMAKE_PREFIX_PATH "/home/lic/.conan/data/zlib/1.2.11/_/_/package/d50a0d523d98c15bb147b18fa7d203887c38be8b/" ${CMAKE_PREFIX_PATH})
 
 foreach(_BUILD_MODULE_PATH ${ZLIB_BUILD_MODULES_PATHS})
     include(${_BUILD_MODULE_PATH})
