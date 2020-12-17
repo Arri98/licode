@@ -1038,6 +1038,9 @@ void MediaStream::loadHandlers() {
             case LowerFPSHandlerEnum:
                 ptr = std::make_shared<LowerFPSHandler>(handler);
                 break;
+            case NoiseReductionHandlerEnum:
+               // ptr = std::make_shared<NoiseReductionHandler>(handler);
+                break;
             default:
                 break;
         }
