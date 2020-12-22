@@ -106,7 +106,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/third_party/webrtc.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/third_party/nicer.cmake")
 
 # RNNoise
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/third_party/rnnoise")
+# add_subdirectory("erizo/rtp/rnnoise")
 
 ## Erizo
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/erizo")

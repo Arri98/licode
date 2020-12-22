@@ -8,11 +8,12 @@
 
 #include "pipeline/Handler.h"
 #include "./logger.h"
+#include "../MediaDefinitions.h"
 
 extern "C"{
-#include <rnnoise.h>
+#include "rnnoise-nu/include/rnnoise-nu.h"
 }
-#define FRAME_SIZE 500;
+#define FRAME_SIZE 480;
 
 namespace erizo {
 
@@ -40,9 +41,14 @@ namespace erizo {
 
     private:
         std::vector<std::string> parameters;
-        DenoiseState *st;
-        float inBuffer[500];
-        float outBuffer[500];
+        DenoiseState **sts;
+        RNNModel *model = NULL;
+        float inBuffer[3000];
+        float processBuffer[480];
+        float outBuffer[3000];
+        int indexIn = 0;
+        int indexOut = 0;
+        std::vector<std::shared_ptr<DataPacket>> packets = {};
     };
 
 }

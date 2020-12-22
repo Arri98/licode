@@ -29,7 +29,7 @@
 #include "rtp/PacketBufferService.h"
 #include "rtp/RtcpProcessorHandler.h"
 #include "rtp/LowerFPSHandler.h"
-//#include "rtp/NoiseReductionHandler.h"
+#include "rtp/NoiseReductionHandler.h"
 
 
 namespace erizo {

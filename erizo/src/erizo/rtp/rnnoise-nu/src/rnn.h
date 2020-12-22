@@ -1,5 +1,4 @@
-/* Copyright (c) 2018 Gregor Richards
- * Copyright (c) 2017 Mozilla */
+/* Copyright (c) 2017 Jean-Marc Valin */
 /*
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions
@@ -25,41 +24,46 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef RNNOISE_H
-#define RNNOISE_H 1
+#ifndef RNN_H_
+#define RNN_H_
 
-#include <stdio.h>
+#include "../include/rnnoise-nu.h"
 
+#include "opus_types.h"
 
-#ifndef RNNOISE_EXPORT
-# if defined(WIN32)
-#  if defined(RNNOISE_BUILD) && defined(DLL_EXPORT)
-#   define RNNOISE_EXPORT __declspec(dllexport)
-#  else
-#   define RNNOISE_EXPORT
-#  endif
-# elif defined(__GNUC__) && defined(RNNOISE_BUILD)
-#  define RNNOISE_EXPORT __attribute__ ((visibility ("default")))
-# else
-#  define RNNOISE_EXPORT
-# endif
-#endif
+#define WEIGHTS_SCALE (1.f/256)
 
-typedef struct DenoiseState DenoiseState;
-typedef struct RNNModel RNNModel;
+#define MAX_NEURONS 128
 
-RNNOISE_EXPORT int rnnoise_get_size();
+#define ACTIVATION_TANH    0
+#define ACTIVATION_SIGMOID 1
+#define ACTIVATION_RELU    2
 
-RNNOISE_EXPORT int rnnoise_init(DenoiseState *st, RNNModel *model);
+typedef signed char rnn_weight;
 
-RNNOISE_EXPORT DenoiseState *rnnoise_create(RNNModel *model);
+typedef struct {
+  const rnn_weight *bias;
+  const rnn_weight *input_weights;
+  int nb_inputs;
+  int nb_neurons;
+  int activation;
+} DenseLayer;
 
-RNNOISE_EXPORT void rnnoise_destroy(DenoiseState *st);
+typedef struct {
+  const rnn_weight *bias;
+  const rnn_weight *input_weights;
+  const rnn_weight *recurrent_weights;
+  int nb_inputs;
+  int nb_neurons;
+  int activation;
+} GRULayer;
 
-RNNOISE_EXPORT float rnnoise_process_frame(DenoiseState *st, float *out, const float *in);
+typedef struct RNNState RNNState;
 
-RNNOISE_EXPORT RNNModel *rnnoise_model_from_file(FILE *f);
+void compute_dense(const DenseLayer *layer, float *output, const float *input);
 
-RNNOISE_EXPORT void rnnoise_model_free(RNNModel *model);
+void compute_gru(const GRULayer *gru, float *state, const float *input);
 
-#endif
+void compute_rnn(RNNState *rnn, float *gains, float *vad, const float *input);
+
+#endif /* _MLP_H_ */

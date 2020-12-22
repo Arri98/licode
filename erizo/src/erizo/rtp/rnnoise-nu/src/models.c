@@ -1,4 +1,4 @@
-/* Copyright (c) 2017 Jean-Marc Valin */
+/* Copyright (c) 2018 Gregor Richards */
 /*
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions
@@ -24,46 +24,55 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef RNN_H_
-#define RNN_H_
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "../include/rnnoise.h"
+#include <string.h>
 
-#include "opus_types.h"
+#include "../include/rnnoise-nu.h"
 
-#define WEIGHTS_SCALE (1.f/256)
+/* This file is just a list of the built-in models and a way of fetching them.
+ * Nothing fancy. */
 
-#define MAX_NEURONS 128
+static const char *model_names[] = {
+    "orig",
+    "cb",
+    "mp",
+    "bd",
+    "lq",
+    "sh",
+    NULL
+};
 
-#define ACTIVATION_TANH    0
-#define ACTIVATION_SIGMOID 1
-#define ACTIVATION_RELU    2
+extern const struct RNNModel
+    model_orig,
+    model_cb,
+    model_mp,
+    model_bd,
+    model_lq,
+    model_sh;
 
-typedef signed char rnn_weight;
+static const struct RNNModel *models[] = {
+    &model_orig,
+    &model_cb,
+    &model_mp,
+    &model_bd,
+    &model_lq,
+    &model_sh
+};
 
-typedef struct {
-  const rnn_weight *bias;
-  const rnn_weight *input_weights;
-  int nb_inputs;
-  int nb_neurons;
-  int activation;
-} DenseLayer;
+const char **rnnoise_models()
+{
+    return model_names;
+}
 
-typedef struct {
-  const rnn_weight *bias;
-  const rnn_weight *input_weights;
-  const rnn_weight *recurrent_weights;
-  int nb_inputs;
-  int nb_neurons;
-  int activation;
-} GRULayer;
-
-typedef struct RNNState RNNState;
-
-void compute_dense(const DenseLayer *layer, float *output, const float *input);
-
-void compute_gru(const GRULayer *gru, float *state, const float *input);
-
-void compute_rnn(RNNState *rnn, float *gains, float *vad, const float *input);
-
-#endif /* _MLP_H_ */
+RNNModel *rnnoise_get_model(const char *name)
+{
+    int i;
+    for (i = 0; model_names[i]; i++) {
+        if (!strcmp(name, model_names[i]))
+            return (RNNModel *) models[i];
+    }
+    return NULL;
+}
