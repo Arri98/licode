@@ -94,9 +94,9 @@ set (LIBS ${LIBS} ${AVCODEC})
 find_library(AVFORMAT avformat HINTS "${THIRD_PARTY_LIB}")
 test_lib(${AVFORMAT})
 set (LIBS ${LIBS} ${AVFORMAT})
-find_library(AVFILTER avutil HINTS "${THIRD_PARTY_LIB}")
+find_library(AVFILTER avfilter HINTS "${THIRD_PARTY_LIB}")
 test_lib(${AVFILTER})
-set (LIBS ${AVFILTER})
+set (LIBS ${LIBS} ${AVFILTER})
 
 # LOG4CXX
 find_library(LOG log4cxx)
