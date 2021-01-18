@@ -41,7 +41,6 @@ namespace erizo {
                RtpHeader *head = reinterpret_cast<RtpHeader*> (packet->data);
                const int SIZE =  packet->length;
                const int HEADER_SIZE = head->getHeaderLength();
-               //ELOG_DEBUG("Header Size: %d", HEADER_SIZE);
                for(int i = 0; i< SIZE - HEADER_SIZE; i++){
                    inBuffer[indexIn + i] = (float) ulaw2linear( (unsigned char)packet->data[i+HEADER_SIZE]);
                }
@@ -54,8 +53,6 @@ namespace erizo {
                    rnnoise_process_frame(sts[0], processBuffer, processBuffer);
                    std::copy(processBuffer,processBuffer + 480, outBuffer + indexOut); //Procesamos y sacamos
                    indexOut += 480;
-                   //ELOG_DEBUG("Index in: %d", indexIn);
-                   //ELOG_DEBUG("Index out: %d", indexOut);
                }
                if(indexOut>= SIZE - HEADER_SIZE) {
                    int bytes = 0;
@@ -69,9 +66,7 @@ namespace erizo {
                            ctx->fireRead(std::move(packet));
                            packetsSend++;
                        }
-                       //ELOG_DEBUG("Bytes send: %d", bytes);
                    }
-                   ELOG_DEBUG("Packets out: %d", packetsSend);
                    packets.erase(packets.begin(),packets.begin()+packetsSend);
                    std::copy(outBuffer + bytes, std::end(outBuffer), outBuffer);
                    indexOut -= bytes; //Bajamos el indice
@@ -86,6 +81,7 @@ namespace erizo {
             ctx->fireWrite(std::move(packet));
     }
 
+    //G711 code and decode. Rnnoise requires PCM 16bits so we have to decode
     #define	SIGN_BIT	(0x80)		/* Sign bit for a A-law byte. */
     #define	QUANT_MASK	(0xf)		/* Quantization field mask. */
     #define	NSEGS		(8)		/* Number of A-law segments. */
