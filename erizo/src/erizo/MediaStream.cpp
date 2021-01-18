@@ -40,6 +40,9 @@
 #include "rtp/RtpPaddingGeneratorHandler.h"
 #include "rtp/RtpUtils.h"
 #include "rtp/PacketCodecParser.h"
+#include "rtp/LowerFPSHandler.h"
+#include "rtp/NoiseReductionHandler.h"
+#include "rtp/CropFilter.h"
 
 
 namespace erizo {
@@ -1040,6 +1043,9 @@ void MediaStream::loadHandlers() {
                 break;
             case NoiseReductionHandlerEnum:
                 ptr = std::make_shared<NoiseReductionHandler>(handler);
+                break;
+            case CropHandlerEnum:
+                ptr = std::make_shared<CropFilter>(handler);
                 break;
             default:
                 break;

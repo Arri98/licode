@@ -28,8 +28,7 @@
 #include "rtp/QualityManager.h"
 #include "rtp/PacketBufferService.h"
 #include "rtp/RtcpProcessorHandler.h"
-#include "rtp/LowerFPSHandler.h"
-#include "rtp/NoiseReductionHandler.h"
+
 
 
 namespace erizo {
@@ -233,11 +232,12 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
   std::shared_ptr<PacketBufferService> packet_buffer_;
   std::shared_ptr<HandlerManager> handler_manager_;
 
-  enum HandlersEnum {LowerFPSHandlerEnum,NoiseReductionHandlerEnum};
+  enum HandlersEnum {LowerFPSHandlerEnum,NoiseReductionHandlerEnum,CropHandlerEnum};
   std::map<std::string, std::shared_ptr<CustomHandler>> handlersPointerDic = {};
   std::map<std::string, HandlersEnum> handlersDic = {
           {"LowerFPSHandler", LowerFPSHandlerEnum},
-          {"NoiseReductionHandler", NoiseReductionHandlerEnum}
+          {"NoiseReductionHandler", NoiseReductionHandlerEnum},
+          {"CropHandler", CropHandlerEnum}
   };
 
   void loadHandlers();

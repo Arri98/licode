@@ -9,6 +9,7 @@
 #include "pipeline/Handler.h"
 #include "./logger.h"
 #include "../MediaDefinitions.h"
+#include "RtpHeaders.h"
 
 extern "C"{
 #include "rnnoise-nu/include/rnnoise-nu.h"
@@ -49,6 +50,11 @@ namespace erizo {
         int indexIn = 0;
         int indexOut = 0;
         std::vector<std::shared_ptr<DataPacket>> packets = {};
+        short ulaw2linear(unsigned char	u_val);
+        short search(short val,short *table,short size);
+        unsigned char lin2ulaw(short pcm_val);
+        short seg_uend[8] = {0x3F, 0x7F, 0xFF, 0x1FF,
+                                    0x3FF, 0x7FF, 0xFFF, 0x1FFF};
     };
 
 }
