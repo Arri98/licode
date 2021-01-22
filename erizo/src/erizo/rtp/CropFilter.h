@@ -39,7 +39,6 @@ namespace erizo {
         void notifyUpdate() override;
         int position () override;
     private:
-        static AVFormatContext *fmt_ctx;
         std::vector<std::string> parameters;
         AVFilterContext *buffersink_ctx;
         AVFilterContext *buffersrc_ctx;
@@ -51,11 +50,13 @@ namespace erizo {
         AVFilterInOut *outputs;
         AVFilterInOut *inputs;
         Vp8Depacketizer* dpckg;
+        AVFormatContext* context_;
+        AVPacket av_packet;
+        const AVCodec *codec;
+        AVCodecParserContext *parser;
+        AVCodecContext *c;
         bool last_frame = false;
         char args[512];
-       // AVCodec *codec = avcodec_find_encoder(AVCODEC_ID_VP8);
-       // AVCodecContext *ctx = avcodec_alloc_context3(codec);
-
     };
 }
 #endif //ERIZO_SRC_ERIZO_RTP_CROPFILTER_H_

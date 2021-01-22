@@ -64,6 +64,11 @@ namespace erizo {
         frame = av_frame_alloc();
         filt_frame = av_frame_alloc();
 
+        av_init_packet(&av_packet);
+        codec = avcodec_find_decoder(AV_CODEC_ID_VP8 );
+        parser = av_parser_init(codec->id);
+        c = avcodec_alloc_context3(codec);
+        context_ = avformat_alloc_context();
         dpckg = new Vp8Depacketizer();
     }
 
@@ -73,8 +78,6 @@ namespace erizo {
         avfilter_graph_free(&filter_graph);
         av_frame_free(&frame);
         av_frame_free(&filt_frame);
-       // avcodec_close(ctx);
-       // avcodec_free_context(ctx);
     }
 
     void CropFilter::enable() {
@@ -93,25 +96,32 @@ namespace erizo {
 
     void CropFilter::read(Context *ctx, std::shared_ptr <DataPacket> packet) {
         if(packet->type == VIDEO_PACKET){
-            int ret;
             ELOG_DEBUG("Received video packet");
             dpckg->fetchPacket(reinterpret_cast<unsigned char*>(packet->data), packet->length);
             ELOG_DEBUG("Fetched pckg video packet");
 
             last_frame = dpckg->processPacket();
-            if(last_frame){
+            if(last_frame) {
                 ELOG_DEBUG("Last frame");
+                //Create AVPackage
+                av_packet.data = dpckg->frame();
+                av_packet.size = dpckg->frameSize();
+                av_packet.stream_index = 0;
+                av_interleaved_write_frame(context_, &av_packet);   // takes ownership of the packet
+                dpckg->reset();
+                ELOG_DEBUG("Add Packet");
+                int* gotFrame=0;
+                avcodec_decode_video2(c,frame,gotFrame, &av_packet);
+                ELOG_DEBUG("Got frame %d", gotFrame);
+                ELOG_DEBUG("Receive frame");
                 ELOG_DEBUG("Add frame");
                 int error;
                 char text[500];
-                error =  av_buffersrc_write_frame(buffersrc_ctx, frame);
-                av_strerror(error,text,500);
-                ELOG_DEBUG("addded frame %s",text);
+                error = av_buffersrc_write_frame(buffersrc_ctx, frame);
+                av_strerror(error, text, 500);
+                ELOG_DEBUG("addded frame %s", text);
                 ELOG_DEBUG("Process frame");
-                ret = av_buffersink_get_frame(buffersink_ctx, filt_frame);
-                if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF){
-                    ELOG_DEBUG("Err: %d",ret);
-                }
+                av_buffersink_get_frame(buffersink_ctx, filt_frame);
                 ELOG_DEBUG("Reset");
                 dpckg->reset();
             }
