@@ -23,7 +23,8 @@ config.cloudProvider.name = '';
  NUVE CONFIGURATION
 **********************************************************/
 config.nuve = {};
-config.nuve.dataBaseURL = "localhost/nuvedb"; // default value: 'mongodb://localhost/nuvedb'
+config.nuve.dataBaseURL = "mongodb://localhost/nuvedb"; // default value: "mongodb://localhost/nuvedb"
+config.nuve.dataBaseName = 'nuvedb'; // default value: 'nuvedb'
 config.nuve.superserviceID = '_auto_generated_ID_'; // default value: ''
 config.nuve.superserviceKey = '_auto_generated_KEY_'; // default value: ''
 config.nuve.testErizoController = 'localhost:8080'; // default value: 'localhost:8080'
@@ -193,10 +194,6 @@ config.erizo.maxport = 0; // default value: 0
 config.erizo.useConnectionQualityCheck = true; // default value: false
 
 config.erizo.disabledHandlers = []; // there are no handlers disabled by default
-
-config.erizo.handlerProfiles = [];
-config.erizo.handlerProfiles[0] = [["NoiseReductionHandler","30"]] //Default handler profile, default value []
-config.erizo.handlerProfiles[1] = [] //Default handler profile, default value []
 
 /*********************************************************
  ROV CONFIGURATION
