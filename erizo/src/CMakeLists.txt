@@ -94,6 +94,9 @@ set (LIBS ${LIBS} ${AVCODEC})
 find_library(AVFORMAT avformat HINTS "${THIRD_PARTY_LIB}")
 test_lib(${AVFORMAT})
 set (LIBS ${LIBS} ${AVFORMAT})
+find_library(AVFILTER avfilter HINTS "${THIRD_PARTY_LIB}")
+test_lib(${AVFILTER})
+set (LIBS ${LIBS} ${AVFILTER})
 
 # LOG4CXX
 find_library(LOG log4cxx)
@@ -104,6 +107,9 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/third_party/webrtc.cmake")
 
 # NICER
 include("${CMAKE_CURRENT_SOURCE_DIR}/third_party/nicer.cmake")
+
+# RNNoise
+# add_subdirectory("erizo/rtp/rnnoise")
 
 ## Erizo
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/erizo")

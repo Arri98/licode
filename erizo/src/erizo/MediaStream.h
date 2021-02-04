@@ -27,6 +27,9 @@
 #include "pipeline/Service.h"
 #include "rtp/QualityManager.h"
 #include "rtp/PacketBufferService.h"
+#include "rtp/RtcpProcessorHandler.h"
+
+
 
 namespace erizo {
 
@@ -73,8 +76,9 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
    * Constructs an empty MediaStream without any configuration.
    */
   MediaStream(std::shared_ptr<Worker> worker, std::shared_ptr<WebRtcConnection> connection,
-      const std::string& media_stream_id, const std::string& media_stream_label,
-      bool is_publisher, int session_version);
+              const std::string& media_stream_id, const std::string& media_stream_label,
+              bool is_publisher, int session_version, std::vector<std::vector<std::string>> customHandlers={});
+
   /**
    * Destructor.
    */
@@ -228,6 +232,18 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
   std::shared_ptr<PacketBufferService> packet_buffer_;
   std::shared_ptr<HandlerManager> handler_manager_;
 
+  enum HandlersEnum {LowerFPSHandlerEnum,NoiseReductionHandlerEnum,CropHandlerEnum};
+  std::map<std::string, std::shared_ptr<CustomHandler>> handlersPointerDic = {};
+  std::map<std::string, HandlersEnum> handlersDic = {
+          {"LowerFPSHandler", LowerFPSHandlerEnum},
+          {"NoiseReductionHandler", NoiseReductionHandlerEnum},
+          {"CropHandler", CropHandlerEnum}
+  };
+
+  void loadHandlers();
+  void addMultipleHandlers(int position);
+  std::vector<std::vector<std::string>> customHandlers;
+
   Pipeline::Ptr pipeline_;
 
   std::shared_ptr<Worker> worker_;
@@ -266,7 +282,7 @@ class PacketReader : public InboundHandler {
   }
 
   void read(Context *ctx, std::shared_ptr<DataPacket> packet) override {
-    media_stream_->read(std::move(packet));
+      media_stream_->read(std::move(packet));
   }
 
   void notifyUpdate() override {
