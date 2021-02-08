@@ -274,32 +274,35 @@ int VideoDecoder::initDecoder(AVCodecContext* context) {
 
 int VideoDecoder::decodeVideo(unsigned char* inBuff, int inBuffLen,
     unsigned char* outBuff, int outBuffLen, int* gotFrame) {
+    ELOG_DEBUG("DecodeVideo");
   if (vDecoder == 0 || vDecoderContext == 0) {
     ELOG_DEBUG("Init Codec First");
     return -1;
   }
-
+    ELOG_DEBUG("gotFrame");
   *gotFrame = false;
-
+    ELOG_DEBUG("xDDDDDD");
   AVPacket avpkt;
   av_init_packet(&avpkt);
-
+    ELOG_DEBUG("PCKG inited");
   avpkt.data = inBuff;
   avpkt.size = inBuffLen;
-
+    ELOG_DEBUG("Data asigned");
   int got_picture;
   int len;
 
   while (avpkt.size > 0) {
+      ELOG_DEBUG("Ahora fallo");
     len = avcodec_decode_video2(vDecoderContext, dPicture, &got_picture,
         &avpkt);
-
+      ELOG_DEBUG("Sorpresa");
     if (len < 0) {
       ELOG_DEBUG("Error decoding video frame");
       return -1;
     }
 
     if (got_picture) {
+        ELOG_DEBUG("Got Picture");
       *gotFrame = 1;
       goto decoding;
     }
@@ -308,10 +311,12 @@ int VideoDecoder::decodeVideo(unsigned char* inBuff, int inBuffLen,
   }
 
   if (!got_picture) {
+      ELOG_DEBUG("Return");
     return -1;
   }
 
 decoding:
+    ELOG_DEBUG("Decoding");
   int outSize = vDecoderContext->height * vDecoderContext->width;
 
   if (outBuffLen < (outSize * 3 / 2)) {

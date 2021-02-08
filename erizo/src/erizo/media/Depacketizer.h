@@ -16,7 +16,7 @@ namespace erizo {
  */
 class Depacketizer {
   DECLARE_LOGGER();
-  static constexpr int kUnpackageBufferSize = 1000000;
+  static constexpr int kUnpackageBufferSize =5000000;
 
  public:
   virtual ~Depacketizer() = default;

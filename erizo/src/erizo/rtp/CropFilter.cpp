@@ -4,6 +4,7 @@
 
 #include "CropFilter.h"
 
+
 namespace erizo {
 
     DEFINE_LOGGER(CropFilter, "rtp.CropFilter");
@@ -65,10 +66,18 @@ namespace erizo {
         filt_frame = av_frame_alloc();
 
         av_init_packet(&av_packet);
-        codec = avcodec_find_decoder(AV_CODEC_ID_VP8 );
-        parser = av_parser_init(codec->id);
-        c = avcodec_alloc_context3(codec);
-        context_ = avformat_alloc_context();
+        VideoCodecID vDecoderID = VIDEO_CODEC_VP8;
+        VideoCodecInfo vDecodeInfo = {
+                vDecoderID,
+                100,
+                320,
+                240,
+                1000000,
+                20
+        };
+        ELOG_DEBUG("Init Decoder");
+        vDecoder.initDecoder(vDecodeInfo);
+        outBuff.reset((unsigned char*) malloc(10000000));
         dpckg = new Vp8Depacketizer();
     }
 
@@ -76,8 +85,6 @@ namespace erizo {
         avfilter_inout_free(&inputs);
         avfilter_inout_free(&outputs);
         avfilter_graph_free(&filter_graph);
-        av_frame_free(&frame);
-        av_frame_free(&filt_frame);
     }
 
     void CropFilter::enable() {
@@ -99,22 +106,14 @@ namespace erizo {
             ELOG_DEBUG("Received video packet");
             dpckg->fetchPacket(reinterpret_cast<unsigned char*>(packet->data), packet->length);
             ELOG_DEBUG("Fetched pckg video packet");
-
             last_frame = dpckg->processPacket();
             if(last_frame) {
                 ELOG_DEBUG("Last frame");
                 //Create AVPackage
-                av_packet.data = dpckg->frame();
-                av_packet.size = dpckg->frameSize();
-                av_packet.stream_index = 0;
-                av_interleaved_write_frame(context_, &av_packet);   // takes ownership of the packet
                 dpckg->reset();
                 ELOG_DEBUG("Add Packet");
-                int* gotFrame=0;
-                avcodec_decode_video2(c,frame,gotFrame, &av_packet);
-                ELOG_DEBUG("Got frame %d", gotFrame);
-                ELOG_DEBUG("Receive frame");
-                ELOG_DEBUG("Add frame");
+                vDecoder.decodeVideo(dpckg->frame(), dpckg->frameSize(), outBuff.get(), outBuffLen, &gotFrame);
+                ELOG_DEBUG("Decoded");
                 int error;
                 char text[500];
                 error = av_buffersrc_write_frame(buffersrc_ctx, frame);
@@ -132,44 +131,4 @@ namespace erizo {
     void CropFilter::write(Context *ctx, std::shared_ptr <DataPacket> packet) {
         ctx->fireWrite(std::move(packet));
     }
-  /*
-    void PacketToAVPackage(char* buf, int len){
-        RtpHeader* head = reinterpret_cast<RtpHeader*>(buf);
-        depacketizer_->fetchPacket((unsigned char*)buf, len);
-        bool deliver = depacketizer_->processPacket();
-
-        initContext();
-        if (video_stream_ == nullptr) {
-            // could not init our context yet.
-            return;
-        }
-
-        if (deliver) {
-            long long current_timestamp = head->getTimestamp();  // NOLINT
-            if (current_timestamp - first_video_timestamp_ < 0) {
-                // we wrapped.  add 2^32 to correct this.
-                // We only handle a single wrap around since that's ~13 hours of recording, minimum.
-                current_timestamp += 0xFFFFFFFF;
-            }
-
-            // All of our video offerings are using a 90khz clock.
-            long long timestamp_to_write = (current_timestamp - first_video_timestamp_) /  // NOLINT
-                                           (video_map_.clock_rate / video_stream_->time_base.den);
-
-            // Adjust for our start time offset
-
-            // in practice, our timebase den is 1000, so this operation is a no-op.
-            timestamp_to_write += video_offset_ms_ / (1000 / video_stream_->time_base.den);
-
-            AVPacket av_packet;
-            av_init_packet(&av_packet);
-            av_packet.data = depacketizer_->frame();
-            av_packet.size = depacketizer_->frameSize();
-            av_packet.pts = timestamp_to_write;
-            av_packet.stream_index = 0;
-            av_interleaved_write_frame(context_, &av_packet);   // takes ownership of the packet
-            depacketizer_->reset();
-        }
-    }
-    */
 }
