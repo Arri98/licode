@@ -316,6 +316,7 @@ int VideoDecoder::decodeVideo(unsigned char* inBuff, int inBuffLen,
   }
 
 decoding:
+
     ELOG_DEBUG("Decoding");
   int outSize = vDecoderContext->height * vDecoderContext->width;
 
@@ -370,6 +371,11 @@ int VideoDecoder::closeDecoder() {
   if (dPicture != NULL)
     av_frame_free(&dPicture);
   return 0;
+}
+
+
+AVFrame* VideoDecoder::returnAVFrame(){
+    return dPicture;
 }
 
 }  // namespace erizo

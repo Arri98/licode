@@ -11,6 +11,8 @@
 #include "../media/Depacketizer.h"
 #include "../media/codecs/VideoCodec.h"
 #include "../media/codecs/Codecs.h"
+#include <iostream>
+#include <fstream>
 
 extern "C" {
 #include <libavutil/avutil.h>
@@ -58,11 +60,13 @@ namespace erizo {
         AVCodecParserContext *parser;
         AVCodecContext *c;
         bool last_frame = false;
-        char args[512];
+        char args[1024];
         boost::scoped_array<unsigned char> outBuff;
         VideoDecoder vDecoder;
         int gotFrame = 0;
         int outBuffLen=320*240*3/2;
+        void display_frame(const AVFrame *framem, int fileN);
+        std::FILE *dump,*dump2;
     };
 }
 #endif //ERIZO_SRC_ERIZO_RTP_CROPFILTER_H_

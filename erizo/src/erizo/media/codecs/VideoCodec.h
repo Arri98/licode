@@ -62,6 +62,7 @@ class VideoDecoder {
   int decodeVideo(unsigned char* inBuff, int inBuffLen,
       unsigned char* outBuff, int outBuffLen, int* gotFrame);
   int closeDecoder();
+  AVFrame* returnAVFrame();
 
  private:
   AVCodec* vDecoder;
