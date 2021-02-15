@@ -13,6 +13,8 @@
 #include "../media/codecs/Codecs.h"
 #include <iostream>
 #include <fstream>
+#include "rtp/RtpHeaders.h"
+#include "rtp/RtpVP8Fragmenter.h"
 
 extern "C" {
 #include <libavutil/avutil.h>
@@ -61,12 +63,25 @@ namespace erizo {
         AVCodecContext *c;
         bool last_frame = false;
         char args[1024];
-        boost::scoped_array<unsigned char> outBuff;
         VideoDecoder vDecoder;
+        VideoEncoder vEncoder;
+        VideoCodecInfo vEncodeInfo;
+        VideoCodecInfo vDecodeInfo;
         int gotFrame = 0;
+        boost::scoped_array<unsigned char> outBuff;
         int outBuffLen=320*240*3/2;
-        void display_frame(const AVFrame *framem, int fileN);
+        unsigned char* encodeFrameBuff;
+        int encodeFrameBuffLen = 100000;
+        int filtFrameLenght;
+        void display_frame(const AVFrame *frame, int fileN);
         std::FILE *dump,*dump2;
+        bool encoderInit;
+        unsigned char* fragmenterBuffer;
+        unsigned int lengthFrag;
+        bool lastFragPacket;
+        RtpHeader* rtpHeader;
+        unsigned int seqnum_;
+        bool firstPackage;
     };
 }
 #endif //ERIZO_SRC_ERIZO_RTP_CROPFILTER_H_

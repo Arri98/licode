@@ -17,6 +17,8 @@ namespace erizo {
         ELOG_DEBUG("Alloc Graph");
         filter_graph = avfilter_graph_alloc();
 
+        encoderInit = false;
+
         ELOG_DEBUG("Create buffersrc");
         const AVFilter *buffersrc  = avfilter_get_by_name("buffer");
         ELOG_DEBUG("Create buffersink");
@@ -68,7 +70,7 @@ namespace erizo {
 
         av_init_packet(&av_packet);
         VideoCodecID vDecoderID = VIDEO_CODEC_VP8;
-        VideoCodecInfo vDecodeInfo = {
+        vDecodeInfo = {
                 vDecoderID,
                 100,
                 320,
@@ -76,12 +78,29 @@ namespace erizo {
                 1000000,
                 20
         };
+        VideoCodecID vEncoderID = VIDEO_CODEC_VP8;
+        vEncodeInfo = {
+                vEncoderID,
+                100,
+                0,
+                0,
+                1000000,
+                20
+        };
+
+
         ELOG_DEBUG("Init Decoder");
         vDecoder.initDecoder(vDecodeInfo);
         outBuff.reset((unsigned char*) malloc(10000000));
         dpckg = new Vp8Depacketizer();
         dump = fopen("dump.txt", "w+");
         dump2 = fopen("dump2.txt", "w+");
+
+        encodeFrameBuff = (unsigned char*) malloc(100000);
+        seqnum_ = 0;
+        fragmenterBuffer = (unsigned char*) malloc(2000);
+        lengthFrag = 0;
+        firstPackage = true;
     }
 
     CropFilter::~CropFilter() {
@@ -105,7 +124,7 @@ namespace erizo {
     }
 
     void CropFilter::read(Context *ctx, std::shared_ptr <DataPacket> packet) {
-        if(packet->type == VIDEO_PACKET){
+        if(packet->type == VIDEO_PACKET && packet->length >100){
             ELOG_DEBUG("Received video packet");
             ELOG_DEBUG("Packet size %d",packet->length);
             dpckg->fetchPacket(reinterpret_cast<unsigned char*>(packet->data), packet->length);
@@ -133,15 +152,55 @@ namespace erizo {
                     av_buffersink_get_frame(buffersink_ctx, filt_frame);
                     ELOG_DEBUG("Height %d",filt_frame->height);
                     //display_frame(filt_frame,2);
-                    ELOG_DEBUG("Reset");
 
+                    if(!encoderInit){
+                        vEncodeInfo.width = filt_frame->width;
+                        ELOG_DEBUG("Filt frame width %d",filt_frame->width);
+                        vEncodeInfo.height = filt_frame->height;
+                        ELOG_DEBUG("Filt frame height %d",filt_frame->height);
+                        filtFrameLenght = avpicture_get_size(AV_PIX_FMT_YUV420P,filt_frame->width,filt_frame->height);
+                        ELOG_DEBUG("Filt frame lenght %d",filtFrameLenght);
+                        vEncoder.initEncoder(vEncodeInfo);
+                        encoderInit = true;
+                    }
+                    ELOG_DEBUG("Encode");
+                    int l = vEncoder.encodeVideo((unsigned char*)filt_frame->data, filtFrameLenght, encodeFrameBuff, encodeFrameBuffLen);
+                    ELOG_DEBUG("Fragmenter");
+                    ELOG_DEBUG("Decoded length %d",l);
+                    RtpVP8Fragmenter frag(encodeFrameBuff, l);
+                    dpckg->reset();
+                    lastFragPacket = false;
+                    while(!lastFragPacket){
+                        lengthFrag=0;
+                        DataPacket p = *packet;
+                        frag.getPacket(fragmenterBuffer, &lengthFrag,&lastFragPacket);
+                        rtpHeader = reinterpret_cast< RtpHeader*>(p.data);
+                        ELOG_DEBUG("Cpy data");
+                        memcpy(p.data + rtpHeader->getHeaderLength(),fragmenterBuffer,lengthFrag);
+                        if(firstPackage){
+                            seqnum_ = rtpHeader->getSeqNumber();
+                            ELOG_DEBUG("Get number %d",seqnum_);
+                            firstPackage = false;
+                        }
+                        rtpHeader->setSeqNumber(seqnum_++);
+                        p.length = lengthFrag+rtpHeader->getHeaderLength();
+                        p.is_keyframe = filt_frame->key_frame;
+                        ELOG_DEBUG("Seq number %d",seqnum_);
+                        ELOG_DEBUG("Fragment n %d",lastFragPacket?1:0);
+                        ELOG_DEBUG("Length %d",lengthFrag);
+                        ELOG_DEBUG("PTS %d",p.received_time_ms);
+                        //ELOG_DEBUG("Going to send");
+                        ctx->fireRead(std::move(std::make_shared<DataPacket>(p)));
+                        ELOG_DEBUG("Sended");
+
+                    }
                 }else{
                     ELOG_DEBUG("Need more packets to decode");
                 };
-                dpckg->reset();
             }
+        }else{
+            ctx->fireRead(std::move(packet));
         }
-        ctx->fireRead(std::move(packet));
     }
 
     void CropFilter::write(Context *ctx, std::shared_ptr <DataPacket> packet) {

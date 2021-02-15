@@ -153,7 +153,7 @@ int VideoEncoder::encodeVideo(unsigned char* inBuffer, int inLength, unsigned ch
   // maybeSwapContext();
 
   int size = coder_context_->width * coder_context_->height;
-  // ELOG_DEBUG("coder_context_ width %d", coder_context_->width);
+  ELOG_DEBUG("coder_context_ width %d", coder_context_->width);
 
   cPicture->pts = AV_NOPTS_VALUE;
   cPicture->data[0] = inBuffer;
@@ -179,12 +179,12 @@ int VideoEncoder::encodeVideo(unsigned char* inBuffer, int inLength, unsigned ch
 
   int ret = 0;
   int got_packet = 0;
-  //    ELOG_DEBUG(
-  //        "Before encoding inBufflen %d, size %d, codecontext width %d pkt->size%d",
-  //        inLength, size, coder_context_->width, pkt.size);
+     ELOG_DEBUG(
+          "Before encoding inBufflen %d, size %d, codecontext width %d pkt->size%d",
+           inLength, size, coder_context_->width, pkt.size);
   ret = avcodec_encode_video2(coder_context_, &pkt, cPicture, &got_packet);
-  //    ELOG_DEBUG("Encoded video size %u, ret %d, got_packet %d, pts %lld, dts %lld",
-  //        pkt.size, ret, got_packet, pkt.pts, pkt.dts);
+     ELOG_DEBUG("Encoded video size %u, ret %d, got_packet %d, pts %lld, dts %lld",
+         pkt.size, ret, got_packet, pkt.pts, pkt.dts);
   if (!ret && got_packet && coder_context_->coded_frame) {
     coder_context_->coded_frame->pts = pkt.pts;
     coder_context_->coded_frame->key_frame =
