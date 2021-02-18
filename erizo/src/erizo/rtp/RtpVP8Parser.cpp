@@ -346,7 +346,7 @@ int RtpVP8Parser::removeTIDAndKeyIdx(unsigned char* data, int data_length) {
 }
 
 RTPPayloadVP8* RtpVP8Parser::parseVP8(unsigned char* data, int dataLength) {
-  // ELOG_DEBUG("Parsing VP8 %d bytes", dataLength);
+   ELOG_DEBUG("Parsing VP8 %d bytes", dataLength);
   RTPPayloadVP8* vp8 = new RTPPayloadVP8;  // = &parsedPacket.info.VP8;
   const unsigned char* dataPtr = data;
 
@@ -356,8 +356,8 @@ RTPPayloadVP8* RtpVP8Parser::parseVP8(unsigned char* data, int dataLength) {
   vp8->beginningOfPartition = (*dataPtr & 0x10) ? true : false;  // S bit
   vp8->partitionID = (*dataPtr & 0x0F);  // PartID field
 
-  // ELOG_DEBUG("X: %d N %d S %d PartID %d",
-  //             extension, vp8->nonReferenceFrame, vp8->beginningOfPartition, vp8->partitionID);
+   ELOG_DEBUG("X: %d N %d S %d PartID %d",
+               extension, vp8->nonReferenceFrame, vp8->beginningOfPartition, vp8->partitionID);
 
   if (vp8->partitionID > 8) {
     // Weak check for corrupt data: PartID MUST NOT be larger than 8.
@@ -375,7 +375,7 @@ RTPPayloadVP8* RtpVP8Parser::parseVP8(unsigned char* data, int dataLength) {
     }
     dataPtr += parsedBytes;
     dataLength -= parsedBytes;
-    // ELOG_DEBUG("Parsed bytes in extension %d", parsedBytes);
+     ELOG_DEBUG("Parsed bytes in extension %d", parsedBytes);
   }
 
   if (dataLength <= 0) {

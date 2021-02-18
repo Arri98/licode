@@ -179,12 +179,12 @@ int VideoEncoder::encodeVideo(unsigned char* inBuffer, int inLength, unsigned ch
 
   int ret = 0;
   int got_packet = 0;
-     ELOG_DEBUG(
-          "Before encoding inBufflen %d, size %d, codecontext width %d pkt->size%d",
-           inLength, size, coder_context_->width, pkt.size);
+     // ELOG_DEBUG(
+      //    "Before encoding inBufflen %d, size %d, codecontext width %d pkt->size%d",
+        //   inLength, size, coder_context_->width, pkt.size);
   ret = avcodec_encode_video2(coder_context_, &pkt, cPicture, &got_packet);
-     ELOG_DEBUG("Encoded video size %u, ret %d, got_packet %d, pts %lld, dts %lld",
-         pkt.size, ret, got_packet, pkt.pts, pkt.dts);
+     // ELOG_DEBUG("Encoded video size %u, ret %d, got_packet %d, pts %lld, dts %lld",
+       //  pkt.size, ret, got_packet, pkt.pts, pkt.dts);
   if (!ret && got_packet && coder_context_->coded_frame) {
     coder_context_->coded_frame->pts = pkt.pts;
     coder_context_->coded_frame->key_frame =
@@ -279,30 +279,23 @@ int VideoDecoder::decodeVideo(unsigned char* inBuff, int inBuffLen,
     ELOG_DEBUG("Init Codec First");
     return -1;
   }
-    ELOG_DEBUG("gotFrame");
   *gotFrame = false;
-    ELOG_DEBUG("xDDDDDD");
   AVPacket avpkt;
   av_init_packet(&avpkt);
-    ELOG_DEBUG("PCKG inited");
   avpkt.data = inBuff;
   avpkt.size = inBuffLen;
-    ELOG_DEBUG("Data asigned");
   int got_picture;
   int len;
 
   while (avpkt.size > 0) {
-      ELOG_DEBUG("Ahora fallo");
     len = avcodec_decode_video2(vDecoderContext, dPicture, &got_picture,
         &avpkt);
-      ELOG_DEBUG("Sorpresa");
     if (len < 0) {
       ELOG_DEBUG("Error decoding video frame");
       return -1;
     }
 
     if (got_picture) {
-        ELOG_DEBUG("Got Picture");
       *gotFrame = 1;
       goto decoding;
     }
@@ -311,7 +304,6 @@ int VideoDecoder::decodeVideo(unsigned char* inBuff, int inBuffLen,
   }
 
   if (!got_picture) {
-      ELOG_DEBUG("Return");
     return -1;
   }
 

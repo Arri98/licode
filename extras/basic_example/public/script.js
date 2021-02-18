@@ -157,13 +157,13 @@ const startBasicExample = () => {
 
     room.addEventListener('room-connected', (roomEvent) => {
       const options = { metadata: { type: 'publisher' }, handlerProfile: '0' };
-      const options2 = { metadata: { type: 'publisher' }, handlerProfile: '1' };
+      // const options2 = { metadata: { type: 'publisher' }, handlerProfile: '1' };
       if (configFlags.simulcast) options.simulcast = { numSpatialLayers: 2 };
       subscribeToStreams(roomEvent.streams);
 
       if (!configFlags.onlySubscribe) {
         room.publish(localStream, options);
-        room.publish(localStream, options2);
+        // room.publish(localStream, options2);
       }
       room.addEventListener('quality-level', (qualityEvt) => {
         console.log(`New Quality Event, connection quality: ${qualityEvt.message}`);

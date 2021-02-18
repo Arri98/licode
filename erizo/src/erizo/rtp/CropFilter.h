@@ -49,6 +49,7 @@ namespace erizo {
         AVFilterContext *buffersink_ctx;
         AVFilterContext *buffersrc_ctx;
         AVFilterContext *crop_ctx;
+        AVFilterContext *resize_ctx;
         AVFilterGraph *filter_graph;
         AVPacket packet;
         AVFrame *frame;
@@ -79,9 +80,11 @@ namespace erizo {
         unsigned char* fragmenterBuffer;
         unsigned int lengthFrag;
         bool lastFragPacket;
-        RtpHeader* rtpHeader;
         unsigned int seqnum_;
+        unsigned int ssrc;
         bool firstPackage;
+        RtpVP8Parser vp8_parser_;
+        unsigned char* rtpBuffer_;
     };
 }
 #endif //ERIZO_SRC_ERIZO_RTP_CROPFILTER_H_
