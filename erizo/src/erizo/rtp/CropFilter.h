@@ -85,6 +85,9 @@ namespace erizo {
         bool firstPackage;
         RtpVP8Parser vp8_parser_;
         unsigned char* rtpBuffer_;
+        unsigned char* filtFrameBuffer;
+        int numberPixels;
+
     };
 }
 #endif //ERIZO_SRC_ERIZO_RTP_CROPFILTER_H_

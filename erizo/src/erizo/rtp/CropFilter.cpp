@@ -139,7 +139,6 @@ namespace erizo {
 
     void CropFilter::read(Context *ctx, std::shared_ptr <DataPacket> packet) {
         if(packet->type == VIDEO_PACKET && packet->length >30){
-            ELOG_DEBUG("lenght %d",packet->length);
             dpckg->fetchPacket(reinterpret_cast<unsigned char*>(packet->data), packet->length);
             last_frame = dpckg->processPacket();
             if(last_frame) {
@@ -150,19 +149,27 @@ namespace erizo {
                     std::shared_ptr<DataPacket> copied_packet = std::make_shared<DataPacket>(*packet);
                     RtpHeader *copy_head = reinterpret_cast<RtpHeader*> (copied_packet->data);
                     frame = vDecoder.returnAVFrame();
-                    display_frame(frame,1);
+                    //display_frame(frame,1);
                     frame->pts = copy_head->getTimestamp();
                     error = av_buffersrc_write_frame(buffersrc_ctx, frame);
                     av_strerror(error, text, 500);
                     av_buffersink_get_frame(buffersink_ctx, filt_frame);
-                    display_frame(filt_frame,2);
+                   // display_frame(filt_frame,2);
 
                     if(!encoderInit){
-                        filtFrameLenght = avpicture_get_size(AV_PIX_FMT_YUV420P,320,240);
+                        filtFrameLenght = avpicture_get_size(AV_PIX_FMT_YUV420P,filt_frame->width,filt_frame->height);
+                        numberPixels = filt_frame->width * filt_frame->height;
+                        ELOG_DEBUG("N Pixels %d",numberPixels);
+                        ELOG_DEBUG("Filt lenght %d",filtFrameLenght);
+                        filtFrameBuffer = (unsigned char*) malloc(filtFrameLenght);
                         vEncoder.initEncoder(vEncodeInfo);
                         encoderInit = true;
                     }
-                    int l = vEncoder.encodeVideo((unsigned char*)filt_frame->data, filtFrameLenght, encodeFrameBuff, encodeFrameBuffLen);
+
+                    memcpy(filtFrameBuffer, filt_frame->data[0], numberPixels);
+                    memcpy(&filtFrameBuffer[numberPixels], filt_frame->data[1], numberPixels/4);
+                    memcpy(&filtFrameBuffer[numberPixels+numberPixels/4], filt_frame->data[2], numberPixels/4);
+                    int l = vEncoder.encodeVideo(filtFrameBuffer, filtFrameLenght, encodeFrameBuff, encodeFrameBuffLen);
                     RtpVP8Fragmenter frag(encodeFrameBuff, l);
                     dpckg->reset();
                     lastFragPacket = false;
@@ -172,38 +179,22 @@ namespace erizo {
                         RtpHeader rtpHeader;
                         if(firstPackage){
                             seqnum_ = copy_head->getSeqNumber();
-                            //ELOG_DEBUG("Get seqnumber %d",seqnum_);
                             firstPackage = false;
                         }
                         rtpHeader.setSeqNumber(seqnum_++);
                         rtpHeader.setPayloadType(96);
                         rtpHeader.setSSRC(copy_head->getSSRC());
                         rtpHeader.setTimestamp(copy_head->getTimestamp());
-                        //rtpHeader.setExtension(copy_head->getExtension());
-                        //rtpHeader.setExtId(copy_head->getExtId());
-                        //rtpHeader.setExtLength(copy_head->getExtLength());
+
                         rtpHeader.setMarker(lastFragPacket?1:0);
                         int len = lengthFrag+rtpHeader.getHeaderLength();
 
-                        ELOG_DEBUG("Cpy data");
                         memcpy(rtpBuffer_, &rtpHeader, rtpHeader.getHeaderLength());
                         memcpy(&rtpBuffer_[rtpHeader.getHeaderLength()],fragmenterBuffer,lengthFrag);
 
                         std::shared_ptr<DataPacket> exit_packet = std::make_shared<DataPacket>(0, reinterpret_cast<char*>(rtpBuffer_),
                                                                                           len, VIDEO_PACKET, copied_packet->received_time_ms);
-
-                        RtpHeader *exit_head = reinterpret_cast<RtpHeader*> (exit_packet->data);
-                        ELOG_DEBUG("Seq number %d",exit_head->getSeqNumber());
-                        //ELOG_DEBUG("Fragment n %d",exit_packet->lastFragPacket?1:0));
-                        ELOG_DEBUG("Length %d",lengthFrag);
-                        ELOG_DEBUG("Header length %d",rtpHeader.getHeaderLength());
-                        ELOG_DEBUG("PTS %d",exit_head->getTimestamp());
-                        ELOG_DEBUG("SSRC %d",exit_head->getSSRC());
-                        //ELOG_DEBUG("Keyfrmae %d",exit_packet->is_keyframe );
-                        //ELOG_DEBUG("Going to send");
                         ctx->fireRead(std::move(exit_packet));
-                        //ELOG_DEBUG("Sended");
-
                     }
                 }else{
                     ELOG_DEBUG("Need more packets to decode");
