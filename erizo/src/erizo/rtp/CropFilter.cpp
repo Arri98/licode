@@ -19,6 +19,8 @@ namespace erizo {
 
         encoderInit = false;
 
+
+        //Create graph filters
         ELOG_DEBUG("Create buffersrc");
         const AVFilter *buffersrc  = avfilter_get_by_name("buffer");
         ELOG_DEBUG("Create buffersink");
@@ -28,17 +30,16 @@ namespace erizo {
         ELOG_DEBUG("Create resize");
         const AVFilter *resize  = avfilter_get_by_name("scale");
 
-        ELOG_DEBUG("Alloc in/out");
-
+        //Config params for filters
         char text[500];
         ELOG_DEBUG("Create graph");
-        snprintf(args, sizeof(args),
+        snprintf(args, sizeof(args), //Arguments
                  "width=320:height=240:pix_fmt=yuv420p:time_base=1/20:sar=1");
 
         int error = avfilter_graph_create_filter(&buffersrc_ctx, buffersrc, "in",
-                                     args, NULL, filter_graph);
-        av_strerror(error,text,500);
-        ELOG_DEBUG("Created source %s",text);
+                                     args, NULL, filter_graph); //Configure
+        av_strerror(error,text,500); //Error code to error text
+        ELOG_DEBUG("Created source %s",text); //Log error text or success
 
         snprintf(args, sizeof(args),
                  "out_w=in_w-100:out_h=in_h-100:x=100:y=100");
@@ -61,6 +62,8 @@ namespace erizo {
         ELOG_DEBUG("Created sink?: %s",text);
         ELOG_DEBUG("Created graph");
 
+
+        //Link filters to create graph
         error = avfilter_link(buffersrc_ctx, 0, crop_ctx, 0);
         av_strerror(error,text,500);
         ELOG_DEBUG("Connected buffer to crop?: %s",text);
@@ -78,10 +81,11 @@ namespace erizo {
         av_strerror(error,text,500);
         ELOG_DEBUG("Config graph?: %s",text);
 
+        //Init frames used
         frame = av_frame_alloc();
         filt_frame = av_frame_alloc();
 
-        av_init_packet(&av_packet);
+        //Encoder and decoder info
         VideoCodecID vDecoderID = VIDEO_CODEC_VP8;
         vDecodeInfo = {
                 vDecoderID,
@@ -101,14 +105,14 @@ namespace erizo {
                 20
         };
 
-
+        //Init files and arrays
         ELOG_DEBUG("Init Decoder");
         vDecoder.initDecoder(vDecodeInfo);
         outBuff.reset((unsigned char*) malloc(10000000));
         dpckg = new Vp8Depacketizer();
         dump = fopen("dump.txt", "w+");
         dump2 = fopen("dump2.txt", "w+");
-
+        latency.open ("latency.txt");
         encodeFrameBuff = (unsigned char*) malloc(100000);
         seqnum_ = 0;
         fragmenterBuffer = (unsigned char*) malloc(2000);
@@ -118,8 +122,6 @@ namespace erizo {
     }
 
     CropFilter::~CropFilter() {
-        avfilter_inout_free(&inputs);
-        avfilter_inout_free(&outputs);
         avfilter_graph_free(&filter_graph);
     }
 
@@ -138,68 +140,131 @@ namespace erizo {
     }
 
     void CropFilter::read(Context *ctx, std::shared_ptr <DataPacket> packet) {
-        if(packet->type == VIDEO_PACKET && packet->length >30){
-            dpckg->fetchPacket(reinterpret_cast<unsigned char*>(packet->data), packet->length);
-            last_frame = dpckg->processPacket();
+        if(packet->type == VIDEO_PACKET && packet->length >30){ //Some packets have no payload and crash
+            clock_t last_time = std::clock();
+            clock_t first_time = std::clock();
+            dpckg->fetchPacket(reinterpret_cast<unsigned char*>(packet->data), packet->length); //Add packet data to processor
+            last_frame = dpckg->processPacket(); //Recover frame if available
+
             if(last_frame) {
-                int decodeL = vDecoder.decodeVideo(dpckg->frame(), dpckg->frameSize(), outBuff.get(), outBuffLen, &gotFrame);
+                int decodeL = vDecoder.decodeVideo(dpckg->frame(), dpckg->frameSize(), outBuff.get(), outBuffLen, &gotFrame); //Decode frame
+
+                duration = ( std::clock() - last_time ) *1000 / (double) CLOCKS_PER_SEC;
+                if(duration>maxDecodeDuration){
+                    maxDecodeDuration=duration;
+                } else if(duration<minDecodeDuration){
+                    minDecodeDuration=duration;
+                }
+                totalDecode +=duration;
+                latency<<"Min Decode: "<< minDecodeDuration <<'\n';
+                latency<<"Max Decode: "<< maxDecodeDuration <<'\n';
+                latency<<"Decode: "<< duration <<'\n';
+                last_time = std::clock();
+
+
                 if(decodeL>0){
                     int error;
                     char text[500];
                     std::shared_ptr<DataPacket> copied_packet = std::make_shared<DataPacket>(*packet);
                     RtpHeader *copy_head = reinterpret_cast<RtpHeader*> (copied_packet->data);
-                    frame = vDecoder.returnAVFrame();
+                    frame = vDecoder.returnAVFrame(); //get frame from decoder
                     //display_frame(frame,1);
-                    frame->pts = copy_head->getTimestamp();
-                    error = av_buffersrc_write_frame(buffersrc_ctx, frame);
+                    frame->pts = copy_head->getTimestamp(); //Copy timestamp
+                    error = av_buffersrc_write_frame(buffersrc_ctx, frame); //Send packet to filter graph
                     av_strerror(error, text, 500);
-                    av_buffersink_get_frame(buffersink_ctx, filt_frame);
+                    av_buffersink_get_frame(buffersink_ctx, filt_frame); //Get frame from filter graph
                    // display_frame(filt_frame,2);
 
+                    duration = ( std::clock() - last_time ) * 1000 / (double) CLOCKS_PER_SEC;
+                    if(duration>maxFilterDuration){
+                        maxFilterDuration=duration;
+                    }else if(duration<minFilterDuration){
+                        minFilterDuration=duration;
+                    }
+                    totalFilter+=duration;
+                    latency<<"Min Filter: "<< minFilterDuration <<'\n';
+                    latency<<"Max Filter: "<< maxFilterDuration <<'\n';
+                    latency<<"Filter: "<< duration <<'\n';
+                    last_time = std::clock();
+
                     if(!encoderInit){
-                        filtFrameLenght = avpicture_get_size(AV_PIX_FMT_YUV420P,filt_frame->width,filt_frame->height);
-                        numberPixels = filt_frame->width * filt_frame->height;
-                        ELOG_DEBUG("N Pixels %d",numberPixels);
-                        ELOG_DEBUG("Filt lenght %d",filtFrameLenght);
-                        filtFrameBuffer = (unsigned char*) malloc(filtFrameLenght);
+                        filtFrameLenght = avpicture_get_size(AV_PIX_FMT_YUV420P,filt_frame->width,filt_frame->height); //Filt frame lenght
+                        numberPixels = filt_frame->width * filt_frame->height; //Number of pixels of frame, nPixel *1.5=  frame lenght in YUV420p
+                        filtFrameBuffer = (unsigned char*) malloc(filtFrameLenght); //Alloc buffer for filtered frame
                         vEncoder.initEncoder(vEncodeInfo);
                         encoderInit = true;
                     }
 
-                    memcpy(filtFrameBuffer, filt_frame->data[0], numberPixels);
-                    memcpy(&filtFrameBuffer[numberPixels], filt_frame->data[1], numberPixels/4);
-                    memcpy(&filtFrameBuffer[numberPixels+numberPixels/4], filt_frame->data[2], numberPixels/4);
-                    int l = vEncoder.encodeVideo(filtFrameBuffer, filtFrameLenght, encodeFrameBuff, encodeFrameBuffLen);
-                    RtpVP8Fragmenter frag(encodeFrameBuff, l);
+                    memcpy(filtFrameBuffer, filt_frame->data[0], numberPixels); //Copy Y plane to buffer
+                    memcpy(&filtFrameBuffer[numberPixels], filt_frame->data[1], numberPixels/4); //Copy U plane to buffer
+                    memcpy(&filtFrameBuffer[numberPixels+numberPixels/4], filt_frame->data[2], numberPixels/4); //Copy V plane to buffer
+
+                    int l = vEncoder.encodeVideo(filtFrameBuffer, filtFrameLenght, encodeFrameBuff, encodeFrameBuffLen); //Encode frame
+
+                    duration = ( std::clock() - last_time ) * 1000 / (double) CLOCKS_PER_SEC;
+                    if(duration>maxEncodeDuration){
+                        maxEncodeDuration=duration;
+                    }else if(duration<minEncodeDuration){
+                        minEncodeDuration=duration;
+                    }
+                    totalEncode+=duration;
+                    latency<<"Encode: "<< duration <<'\n';
+                    latency<<"Max Encode: "<< maxEncodeDuration <<'\n';
+                    latency<<"Min Encode: "<< minEncodeDuration <<'\n';
+                    last_time = std::clock();
+
+                    RtpVP8Fragmenter frag(encodeFrameBuff, l); //Fragmeter divides frame in fragments
                     dpckg->reset();
                     lastFragPacket = false;
-                    while(!lastFragPacket){
+                    while(!lastFragPacket){ //While we have fragmentes
                         lengthFrag=0;
-                        frag.getPacket(fragmenterBuffer, &lengthFrag,&lastFragPacket);
-                        RtpHeader rtpHeader;
+                        frag.getPacket(fragmenterBuffer, &lengthFrag,&lastFragPacket); //Get fragment
+                        RtpHeader rtpHeader; //Create header
                         if(firstPackage){
-                            seqnum_ = copy_head->getSeqNumber();
+                            seqnum_ = copy_head->getSeqNumber(); //Get first seqnumber
                             firstPackage = false;
                         }
-                        rtpHeader.setSeqNumber(seqnum_++);
-                        rtpHeader.setPayloadType(96);
-                        rtpHeader.setSSRC(copy_head->getSSRC());
-                        rtpHeader.setTimestamp(copy_head->getTimestamp());
+                        rtpHeader.setSeqNumber(seqnum_++); //increase seq number
+                        rtpHeader.setPayloadType(96); //Set payload type
+                        rtpHeader.setSSRC(copy_head->getSSRC());//Same ssrc as original packet
+                        rtpHeader.setTimestamp(copy_head->getTimestamp());//Same timestamp as original packet
 
-                        rtpHeader.setMarker(lastFragPacket?1:0);
+                        rtpHeader.setMarker(lastFragPacket?1:0); //Set marker
                         int len = lengthFrag+rtpHeader.getHeaderLength();
 
-                        memcpy(rtpBuffer_, &rtpHeader, rtpHeader.getHeaderLength());
-                        memcpy(&rtpBuffer_[rtpHeader.getHeaderLength()],fragmenterBuffer,lengthFrag);
+                        memcpy(rtpBuffer_, &rtpHeader, rtpHeader.getHeaderLength()); //Copy header to buffer
+                        memcpy(&rtpBuffer_[rtpHeader.getHeaderLength()],fragmenterBuffer,lengthFrag); //Copy data to buffer
 
+                        //Create packet with buffer previous buffer
                         std::shared_ptr<DataPacket> exit_packet = std::make_shared<DataPacket>(0, reinterpret_cast<char*>(rtpBuffer_),
                                                                                           len, VIDEO_PACKET, copied_packet->received_time_ms);
-                        ctx->fireRead(std::move(exit_packet));
+
+
+                        ctx->fireRead(std::move(exit_packet)); //Send packet
                     }
-                }else{
-                    ELOG_DEBUG("Need more packets to decode");
-                };
-            }
+                    duration = ( std::clock() - first_time) * 1000/ (double) CLOCKS_PER_SEC;
+                    if(duration>maxDuration){
+                        maxDuration=duration;
+                    }else if(duration<minDuration){
+                        minDuration=duration;
+                    }
+                    count++;
+                    total+=duration;
+                    latency<<"Min time: "<< minDuration <<'\n';
+                    latency<<"Max time: "<< maxDuration <<'\n';
+                    latency<<"Total time: "<< duration <<'\n';
+                    latency<<"AVG decode: "<< totalDecode/count <<'\n';
+                    latency<<"AVG filter: "<< totalFilter/count <<'\n';
+                    latency<<"AVG encode: "<< totalEncode/count <<'\n';
+                    latency<<"AVG total: "<< total/count <<'\n';
+                    latency<<"Count: "<< count <<'\n';
+                    latency<<"-------------------------------\n";
+                }
+            }else{
+                latency<<"Need more packets to decode\n";
+                latency<<"-------------------------------\n";
+                ELOG_DEBUG("Need more packets to decode");
+            };
         }else{
             ctx->fireRead(std::move(packet));
         }
