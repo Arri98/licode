@@ -15,7 +15,6 @@
 #include <fstream>
 #include "rtp/RtpHeaders.h"
 #include "rtp/RtpVP8Fragmenter.h"
-#include <time.h>
 
 extern "C" {
 #include <libavutil/avutil.h>
@@ -55,7 +54,7 @@ namespace erizo {
         AVFrame *filt_frame; //Frame filtered
         AVFrame *frame; //Frame decoded
         Vp8Depacketizer* dpckg; //Depacketizer: rtp packets to frames
-        bool last_frame = false; //Frame available from depacketizer TODO:Chamge name
+        bool gotFrameFromPckg = false; //Frame available from depacketizer
         char args[1024]; //Args for filters
         VideoDecoder vDecoder; //Video decoder
         VideoEncoder vEncoder; //Video encoder
@@ -81,22 +80,6 @@ namespace erizo {
         unsigned char* rtpBuffer_; //buffer for data to send in rtp packet
         unsigned char* filtFrameBuffer; //Frame where we copy YUV planes before sending to encoder
         int numberPixels; //Number of pixel in filt frame for copy planes
-        clock_t last_time;
-        clock_t current_time;
-        double duration;
-        double maxDuration=0;
-        double maxEncodeDuration=0;
-        double maxFilterDuration=0;
-        double maxDecodeDuration=0;
-        double minDuration=999999;
-        double minEncodeDuration=999999;
-        double minFilterDuration=999999;
-        double minDecodeDuration=999999;
-        long double totalEncode=0;
-        long double totalDecode=0;
-        long double totalFilter=0;
-        double total=0;
-        int count=0;
-    };
+};
 }
 #endif //ERIZO_SRC_ERIZO_RTP_CROPFILTER_H_

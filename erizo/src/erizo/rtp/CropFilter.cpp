@@ -141,27 +141,10 @@ namespace erizo {
 
     void CropFilter::read(Context *ctx, std::shared_ptr <DataPacket> packet) {
         if(packet->type == VIDEO_PACKET && packet->length >30){ //Some packets have no payload and crash
-            clock_t last_time = std::clock();
-            clock_t first_time = std::clock();
             dpckg->fetchPacket(reinterpret_cast<unsigned char*>(packet->data), packet->length); //Add packet data to processor
-            last_frame = dpckg->processPacket(); //Recover frame if available
-
-            if(last_frame) {
+            gotFrameFromPckg = dpckg->processPacket(); //Recover frame if available
+            if(gotFrameFromPckg) {
                 int decodeL = vDecoder.decodeVideo(dpckg->frame(), dpckg->frameSize(), outBuff.get(), outBuffLen, &gotFrame); //Decode frame
-
-                duration = ( std::clock() - last_time ) *1000 / (double) CLOCKS_PER_SEC;
-                if(duration>maxDecodeDuration){
-                    maxDecodeDuration=duration;
-                } else if(duration<minDecodeDuration){
-                    minDecodeDuration=duration;
-                }
-                totalDecode +=duration;
-                latency<<"Min Decode: "<< minDecodeDuration <<'\n';
-                latency<<"Max Decode: "<< maxDecodeDuration <<'\n';
-                latency<<"Decode: "<< duration <<'\n';
-                last_time = std::clock();
-
-
                 if(decodeL>0){
                     int error;
                     char text[500];
@@ -174,18 +157,6 @@ namespace erizo {
                     av_strerror(error, text, 500);
                     av_buffersink_get_frame(buffersink_ctx, filt_frame); //Get frame from filter graph
                    // display_frame(filt_frame,2);
-
-                    duration = ( std::clock() - last_time ) * 1000 / (double) CLOCKS_PER_SEC;
-                    if(duration>maxFilterDuration){
-                        maxFilterDuration=duration;
-                    }else if(duration<minFilterDuration){
-                        minFilterDuration=duration;
-                    }
-                    totalFilter+=duration;
-                    latency<<"Min Filter: "<< minFilterDuration <<'\n';
-                    latency<<"Max Filter: "<< maxFilterDuration <<'\n';
-                    latency<<"Filter: "<< duration <<'\n';
-                    last_time = std::clock();
 
                     if(!encoderInit){
                         filtFrameLenght = avpicture_get_size(AV_PIX_FMT_YUV420P,filt_frame->width,filt_frame->height); //Filt frame lenght
@@ -200,18 +171,6 @@ namespace erizo {
                     memcpy(&filtFrameBuffer[numberPixels+numberPixels/4], filt_frame->data[2], numberPixels/4); //Copy V plane to buffer
 
                     int l = vEncoder.encodeVideo(filtFrameBuffer, filtFrameLenght, encodeFrameBuff, encodeFrameBuffLen); //Encode frame
-
-                    duration = ( std::clock() - last_time ) * 1000 / (double) CLOCKS_PER_SEC;
-                    if(duration>maxEncodeDuration){
-                        maxEncodeDuration=duration;
-                    }else if(duration<minEncodeDuration){
-                        minEncodeDuration=duration;
-                    }
-                    totalEncode+=duration;
-                    latency<<"Encode: "<< duration <<'\n';
-                    latency<<"Max Encode: "<< maxEncodeDuration <<'\n';
-                    latency<<"Min Encode: "<< minEncodeDuration <<'\n';
-                    last_time = std::clock();
 
                     RtpVP8Fragmenter frag(encodeFrameBuff, l); //Fragmeter divides frame in fragments
                     dpckg->reset();
@@ -242,27 +201,8 @@ namespace erizo {
 
                         ctx->fireRead(std::move(exit_packet)); //Send packet
                     }
-                    duration = ( std::clock() - first_time) * 1000/ (double) CLOCKS_PER_SEC;
-                    if(duration>maxDuration){
-                        maxDuration=duration;
-                    }else if(duration<minDuration){
-                        minDuration=duration;
-                    }
-                    count++;
-                    total+=duration;
-                    latency<<"Min time: "<< minDuration <<'\n';
-                    latency<<"Max time: "<< maxDuration <<'\n';
-                    latency<<"Total time: "<< duration <<'\n';
-                    latency<<"AVG decode: "<< totalDecode/count <<'\n';
-                    latency<<"AVG filter: "<< totalFilter/count <<'\n';
-                    latency<<"AVG encode: "<< totalEncode/count <<'\n';
-                    latency<<"AVG total: "<< total/count <<'\n';
-                    latency<<"Count: "<< count <<'\n';
-                    latency<<"-------------------------------\n";
                 }
             }else{
-                latency<<"Need more packets to decode\n";
-                latency<<"-------------------------------\n";
                 ELOG_DEBUG("Need more packets to decode");
             };
         }else{
