@@ -6,15 +6,17 @@
 
 #include "pipeline/Handler.h"
 #include "./logger.h"
-#include "../MediaDefinitions.h"
-#include <string>
 #include "../media/Depacketizer.h"
 #include "../media/codecs/VideoCodec.h"
 #include "../media/codecs/Codecs.h"
-#include <iostream>
-#include <fstream>
 #include "rtp/RtpHeaders.h"
 #include "rtp/RtpVP8Fragmenter.h"
+#include "../MediaDefinitions.h"
+#include "../MediaStream.h"
+#include "rtp/RtpUtils.h"
+#include <iostream>
+#include <fstream>
+#include <string>
 
 extern "C" {
 #include <libavutil/avutil.h>
@@ -45,6 +47,7 @@ namespace erizo {
         void notifyUpdate() override;
         int position () override;
     private:
+        void sendPLI(packetPriority priority = HIGH_PRIORITY);
         std::vector<std::string> parameters; //Parameters recieved
         AVFilterContext *buffersink_ctx; //Context for buffer sink: Were we send frames to be filtered
         AVFilterContext *buffersrc_ctx; //ontext for buffer source: Were we receive frames filtered
@@ -80,6 +83,10 @@ namespace erizo {
         unsigned char* rtpBuffer_; //buffer for data to send in rtp packet
         unsigned char* filtFrameBuffer; //Frame where we copy YUV planes before sending to encoder
         int numberPixels; //Number of pixel in filt frame for copy planes
+        uint32_t video_sink_ssrc_;
+        uint32_t video_source_ssrc_;
+        MediaStream *stream_;
+        int counter = 0;
 };
 }
 #endif //ERIZO_SRC_ERIZO_RTP_CROPFILTER_H_

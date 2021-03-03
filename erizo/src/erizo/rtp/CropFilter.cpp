@@ -136,11 +136,11 @@ namespace erizo {
     }
 
     int CropFilter::position() {
-        return 1;
+        return 2;
     }
 
     void CropFilter::read(Context *ctx, std::shared_ptr <DataPacket> packet) {
-        if(packet->type == VIDEO_PACKET && packet->length >30){ //Some packets have no payload and crash
+        if(packet->type == VIDEO_PACKET && packet->length >32){ //Some packets have no payload and crash
             dpckg->fetchPacket(reinterpret_cast<unsigned char*>(packet->data), packet->length); //Add packet data to processor
             gotFrameFromPckg = dpckg->processPacket(); //Recover frame if available
             if(gotFrameFromPckg) {
@@ -159,7 +159,13 @@ namespace erizo {
                    // display_frame(filt_frame,2);
 
                     if(!encoderInit){
-                        filtFrameLenght = avpicture_get_size(AV_PIX_FMT_YUV420P,filt_frame->width,filt_frame->height); //Filt frame lenght
+                        auto pipeline = getContext()->getPipelineShared();
+                        stream_ = pipeline->getService<MediaStream>().get();
+                        video_sink_ssrc_ = stream_->getVideoSinkSSRC();
+                        video_source_ssrc_ = stream_->getVideoSourceSSRC();
+                        sendPLI();
+
+                        filtFrameLenght = avpicture_get_size(AV_PIX_FMT_YUV420P,320,240); //Filt frame lenght
                         numberPixels = filt_frame->width * filt_frame->height; //Number of pixels of frame, nPixel *1.5=  frame lenght in YUV420p
                         filtFrameBuffer = (unsigned char*) malloc(filtFrameLenght); //Alloc buffer for filtered frame
                         vEncoder.initEncoder(vEncodeInfo);
@@ -198,13 +204,10 @@ namespace erizo {
                         std::shared_ptr<DataPacket> exit_packet = std::make_shared<DataPacket>(0, reinterpret_cast<char*>(rtpBuffer_),
                                                                                           len, VIDEO_PACKET, copied_packet->received_time_ms);
 
-
                         ctx->fireRead(std::move(exit_packet)); //Send packet
                     }
                 }
-            }else{
-                ELOG_DEBUG("Need more packets to decode");
-            };
+            }
         }else{
             ctx->fireRead(std::move(packet));
         }
@@ -232,6 +235,9 @@ namespace erizo {
         fflush(stdout);
     }
 
+    void CropFilter::sendPLI(packetPriority priority) {
+        getContext()->fireRead(RtpUtils::createPLI(video_sink_ssrc_, video_source_ssrc_, priority));
+    }
 
 
 
