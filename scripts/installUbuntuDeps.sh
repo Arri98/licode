@@ -103,7 +103,7 @@ install_apt_deps(){
 }
 
 install_conan(){
-  sudo pip3 install conan==1.21
+  sudo pip3 install conan==1.34
 }
 
 install_cpplint(){
