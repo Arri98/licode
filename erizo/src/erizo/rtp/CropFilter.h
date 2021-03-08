@@ -48,11 +48,16 @@ namespace erizo {
         int position () override;
     private:
         void sendPLI(packetPriority priority = HIGH_PRIORITY);
+        void configureFilters(int width, int height);
         std::vector<std::string> parameters; //Parameters recieved
         AVFilterContext *buffersink_ctx; //Context for buffer sink: Were we send frames to be filtered
         AVFilterContext *buffersrc_ctx; //ontext for buffer source: Were we receive frames filtered
         AVFilterContext *crop_ctx;  //Context for crop filter
         AVFilterContext *resize_ctx; //Context for resize filfer
+        AVFilter *buffersrc;
+        AVFilter *buffersink;
+        AVFilter *crop;
+        AVFilter *resize ;
         AVFilterGraph *filter_graph; // Context for filter graph
         AVFrame *filt_frame; //Frame filtered
         AVFrame *frame; //Frame decoded
@@ -86,7 +91,9 @@ namespace erizo {
         uint32_t video_sink_ssrc_;
         uint32_t video_source_ssrc_;
         MediaStream *stream_;
-        int counter = 0;
+        bool sizeChanged = false;
+        int lastHeight = 320;
+        int lastWidth = 240;
 };
 }
 #endif //ERIZO_SRC_ERIZO_RTP_CROPFILTER_H_

@@ -158,6 +158,7 @@ const startBasicExample = () => {
     room.addEventListener('room-connected', (roomEvent) => {
       const options = { metadata: { type: 'publisher' }, handlerProfile: '0' };
       const options2 = { metadata: { type: 'publisher' }, handlerProfile: '1' };
+
       if (configFlags.simulcast) options.simulcast = { numSpatialLayers: 2 };
       subscribeToStreams(roomEvent.streams);
 
