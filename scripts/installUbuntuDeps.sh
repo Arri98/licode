@@ -94,12 +94,20 @@ install_apt_deps(){
   sudo apt-get update -y
   check_version
   echo "Installing gcc $gcc_version"
-  sudo apt-get install -qq git make gcc-$gcc_version g++-$gcc_version python3-pip libssl-dev cmake pkg-config liblog4cxx-dev rabbitmq-server mongodb curl autoconf libtool automake -y
+  sudo apt-get install -qq git make gcc-$gcc_version g++-$gcc_version python3-pip libssl-dev cmake pkg-config liblog4cxx-dev rabbitmq-server curl autoconf libtool automake -y
   sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-$gcc_version 60 --slave /usr/bin/g++ g++ /usr/bin/g++-$gcc_version
   echo "done"
   
 
   sudo chown -R `whoami` ~/.npm ~/tmp/ || true
+}
+
+install_mongodb(){
+  echo "Installing mongodb-org from tar"
+  sudo apt-get install -y libcurl4 openssl liblzma5
+  wget -P $LIB_DIR https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2004-4.4.4.tgz
+  tar -zxvf $LIB_DIR/mongodb-linux-x86_64-ubuntu2004-4.4.4.tgz -C $LIB_DIR
+  sudo cp $LIB_DIR/mongodb-linux-x86_64-ubuntu2004-4.4.4/bin/* /usr/local/bin/
 }
 
 install_conan(){
@@ -242,6 +250,7 @@ mkdir -p $PREFIX_DIR
 
 check_sudo
 install_apt_deps
+install_mongodb
 install_conan
 check_proxy
 install_openssl
