@@ -25,8 +25,8 @@ config.cloudProvider.name = '';
 config.nuve = {};
 config.nuve.dataBaseURL = "mongodb://localhost/nuvedb"; // default value: "mongodb://localhost/nuvedb"
 config.nuve.dataBaseName = 'nuvedb'; // default value: 'nuvedb'
-config.nuve.superserviceID = 'auto_generated_ID_'; // default value: ''
-config.nuve.superserviceKey = 'auto_generated_KEY_'; // default value: ''
+config.nuve.superserviceID = '_auto_generated_ID_'; // default value: ''
+config.nuve.superserviceKey = '_auto_generated_KEY_'; // default value: ''
 config.nuve.testErizoController = 'localhost:8080'; // default value: 'localhost:8080'
 // Nuve Cloud Handler policies are in nuve/nuveAPI/ch_policies/ folder
 config.nuve.cloudHandlerPolicy = 'default_policy.js'; // default value: 'default_policy.js'
