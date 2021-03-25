@@ -367,4 +367,9 @@ int VideoDecoder::closeDecoder() {
   return 0;
 }
 
+
+AVFrame* VideoDecoder::returnAVFrame(){
+    return dPicture;
+}
+
 }  // namespace erizo
