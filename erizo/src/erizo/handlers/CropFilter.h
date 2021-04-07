@@ -86,6 +86,8 @@ namespace erizo {
         unsigned char* rtpBuffer_; //buffer for data to send in rtp packet
         unsigned char* filtFrameBuffer; //Frame where we copy YUV planes before sending to encoder
         int numberPixels; //Number of pixel in filt frame for copy planes
+        RtpHeader *copy_head;
+        RtcpHeader *rtcp_head;
         bool sizeChanged = false;
         int lastHeight = 320;
         int lastWidth = 240;

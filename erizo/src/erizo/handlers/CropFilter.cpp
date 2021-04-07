@@ -93,10 +93,9 @@ namespace erizo {
     }
 
     void CropFilter::read(Context *ctx, std::shared_ptr <DataPacket> packet) {
-        std::shared_ptr<DataPacket> copied_packet = std::make_shared<DataPacket>(*packet);
-        RtcpHeader *rtcp_head = reinterpret_cast<RtcpHeader*> (copied_packet->data);
+        rtcp_head = reinterpret_cast<RtcpHeader*> (packet->data);
         if(packet->type == VIDEO_PACKET &&  !rtcp_head->isRtcp()){ //dont filter rtcp packets
-            RtpHeader *copy_head = reinterpret_cast<RtpHeader*> (copied_packet->data);
+            copy_head = reinterpret_cast<RtpHeader*> (packet->data);
             if(firstPackage){
                 seqnum_ = copy_head->getSeqNumber(); //Get first seqnumber
                 firstPackage = false;
@@ -118,6 +117,7 @@ namespace erizo {
                     lastWidth = frame->width;
                     lastHeight = frame->height;
                     if(sizeChanged){
+                        free(filtFrameBuffer);
                         configureFilters(frame->height, frame->width);
                         sizeChanged = false;
                     }
@@ -135,9 +135,14 @@ namespace erizo {
                         vEncoder.initEncoder(vEncodeInfo);
                         encoderInit = true;
                     }
+
                     memcpy(filtFrameBuffer, filt_frame->data[0], numberPixels); //Copy Y plane to buffer
                     memcpy(&filtFrameBuffer[numberPixels], filt_frame->data[1], numberPixels/4); //Copy U plane to buffer
                     memcpy(&filtFrameBuffer[numberPixels+numberPixels/4], filt_frame->data[2], numberPixels/4); //Copy V plane to buffer
+                    ELOG_DEBUG("Free frame");
+                    av_frame_unref(frame);
+                    ELOG_DEBUG("Free filt");
+                    av_frame_unref(filt_frame);
                     int l = vEncoder.encodeVideo(filtFrameBuffer, filtFrameLenght, encodeFrameBuff, encodeFrameBuffLen); //Encode frame
                     RtpVP8Fragmenter frag(encodeFrameBuff, l); //Fragmeter divides frame in fragments
                     dpckg->reset();
@@ -150,18 +155,18 @@ namespace erizo {
                         rtpHeader.setPayloadType(96); //Set payload type
                         rtpHeader.setSSRC(copy_head->getSSRC());//Same ssrc as original packet
                         rtpHeader.setTimestamp(copy_head->getTimestamp());//Same timestamp as original packet
-
                         rtpHeader.setMarker(lastFragPacket?1:0); //Set marker
                         int len = lengthFrag+rtpHeader.getHeaderLength();
                         memcpy(rtpBuffer_, &rtpHeader, rtpHeader.getHeaderLength()); //Copy header to buffer
                         memcpy(&rtpBuffer_[rtpHeader.getHeaderLength()],fragmenterBuffer,lengthFrag); //Copy data to buffer
-
                         //Create packet with buffer previous buffer
+                        int received_time =  packet->received_time_ms;
+
                         std::shared_ptr<DataPacket> exit_packet = std::make_shared<DataPacket>(0, reinterpret_cast<char*>(rtpBuffer_),
-                                                                                               len, VIDEO_PACKET, copied_packet->received_time_ms);
+                                                                                              len, VIDEO_PACKET, received_time);
                         ctx->fireRead(std::move(exit_packet)); //Send packet
                     }
-
+                    packet.reset();
                 }else{
                     RtpHeader *head = reinterpret_cast<RtpHeader*> (packet->data);
                     head->setSeqNumber(seqnum_++);
