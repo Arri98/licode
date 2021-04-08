@@ -46,7 +46,7 @@ namespace erizo {
         void notifyUpdate() override;
         Positions position () override;
     private:
-        void configureFilters(int width, int height);
+        void configureFilters(int width, int height, std::string cropConfig);
         std::map <std::string,std::string>  parameters; //Parameters recieved
         AVFilterContext *buffersink_ctx; //Context for buffer sink: Were we send frames to be filtered
         AVFilterContext *buffersrc_ctx; //ontext for buffer source: Were we receive frames filtered

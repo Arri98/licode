@@ -29,7 +29,7 @@ namespace erizo {
         crop  = avfilter_get_by_name("crop");
         ELOG_DEBUG("Create resize");
         resize  = avfilter_get_by_name("scale");
-        configureFilters(320, 240);
+        configureFilters(320, 240, parameters.at("crop"));
         //Init frames used
         frame = av_frame_alloc();
         filt_frame = av_frame_alloc();
@@ -118,7 +118,7 @@ namespace erizo {
                     lastHeight = frame->height;
                     if(sizeChanged){
                         free(filtFrameBuffer);
-                        configureFilters(frame->height, frame->width);
+                        configureFilters(frame->height, frame->width,parameters.at("crop"));
                         sizeChanged = false;
                     }
                     frame->pts = copy_head->getTimestamp(); //Copy timestamp
@@ -139,9 +139,7 @@ namespace erizo {
                     memcpy(filtFrameBuffer, filt_frame->data[0], numberPixels); //Copy Y plane to buffer
                     memcpy(&filtFrameBuffer[numberPixels], filt_frame->data[1], numberPixels/4); //Copy U plane to buffer
                     memcpy(&filtFrameBuffer[numberPixels+numberPixels/4], filt_frame->data[2], numberPixels/4); //Copy V plane to buffer
-                    ELOG_DEBUG("Free frame");
                     av_frame_unref(frame);
-                    ELOG_DEBUG("Free filt");
                     av_frame_unref(filt_frame);
                     int l = vEncoder.encodeVideo(filtFrameBuffer, filtFrameLenght, encodeFrameBuff, encodeFrameBuffLen); //Encode frame
                     RtpVP8Fragmenter frag(encodeFrameBuff, l); //Fragmeter divides frame in fragments
@@ -200,7 +198,7 @@ namespace erizo {
         fflush(stdout);
     }
 
-    void CropFilter::configureFilters(int height , int width) {
+    void CropFilter::configureFilters(int height , int width, std::string cropConfig) {
         //Config params for filters
         char text[500];
         ELOG_DEBUG("Create graph");
@@ -215,7 +213,7 @@ namespace erizo {
 
 
         snprintf(args, sizeof(args),
-                 "out_w=1/3*in_w:out_h=1/3*in_h");
+                "%s",cropConfig.c_str());
         error = avfilter_graph_create_filter(&crop_ctx, crop, "crop",
                                              args, NULL, filter_graph);
         av_strerror(error,text,500);

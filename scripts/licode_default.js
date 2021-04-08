@@ -196,7 +196,7 @@ config.erizo.useConnectionQualityCheck = true; // default value: false
 config.erizo.disabledHandlers = []; // there are no handlers disabled by default
 
 config.erizo.handlerProfiles = [];
-config.erizo.handlerProfiles[0] = [] //Default handler profile, default value [], format {"handlerName":"name",param1:"value1","param2":"value2",...}
+config.erizo.handlerProfiles[0] = [{"name":"Crop", "crop":"out_w=1/2*in_w:out_h=1/2*in_h"},{"name":"NoiseReduction","reduction":"20"}] //Default handler profile, default value [], format {"handlerName":"name",param1:"value1","param2":"value2",...}
 /*********************************************************
  ROV CONFIGURATION
 **********************************************************/
